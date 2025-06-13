@@ -1,0 +1,13 @@
+{application, rebar3_egrpc_plugin, [
+    {description, "Rebar3 plugin to generate grpc client codes for egrpc"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {mod, {rebar3_egrpc_plugin_app, []}},
+    {applications,[kernel, stdlib, gpb, providers]},
+    {env, []},
+    {modules, []},
+    {licenses, ["Apache-2.0"]},
+    {links, [
+        {"Github", "https://github.com/belltoy/rebar3_egrpc_plugin"}
+    ]}
+ ]}.

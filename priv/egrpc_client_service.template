@@ -1,0 +1,9 @@
+{description, "egrpc gRPC client service modules template"}.
+{variables, [
+    {fq_service_name,   "",       "Original fully qualified service name, as it'll appear in a request"},
+    {pb_module,         "",       "Name of protobuf module to get type specs from"},
+    {methods,           [],       "List of methods for service"},
+    {use_doc_attribute, true,     "Whether to use doc attributes for methods documentation"},
+    {grpc_type,         "",       "Name of the gRPC method type, e.g. 'unary', 'server_streaming', 'client_streaming', 'bidi_streaming'"}
+]}.
+{template, "egrpc_client_service.erl", "{{out_dir}}/{{module_name}}.erl"}.
