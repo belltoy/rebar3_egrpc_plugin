@@ -1,7 +1,6 @@
 -module(rebar3_egrpc_prv_compile).
 
 -export([init/1, do/1, format_error/1]).
--export([list_snake_case/1]).
 
 -include_lib("providers/include/providers.hrl").
 
@@ -110,7 +109,7 @@ format_services(GpbModule, Service, OutDir, EgrpcOpts) ->
     %% Use fully qualified service name as module name
     ModuleName = lists:join("", [
         ModulePrefix,
-        list_snake_case(atom_to_list(FqServiceName)),
+        snake_case(atom_to_list(FqServiceName)),
         ModuleSuffix
     ]),
 
@@ -136,7 +135,7 @@ format_rpc_def(#{
     output_stream := OutputStream
 }) ->
      [
-         {method,           list_snake_case(atom_to_list(FqMethodName))},
+         {method,           snake_case(atom_to_list(FqMethodName))},
          {fq_method_name,   atom_to_list(FqMethodName)},
          {input,            Input},
          {output,           Output},
@@ -145,18 +144,17 @@ format_rpc_def(#{
          {grpc_method_type, grpc_type(InputStream, OutputStream)}
      ].
 
-list_snake_case(NameString) ->
+snake_case(NameString) ->
     Snaked = lists:foldl(fun(RE, Snaking) ->
         re:replace(Snaking, RE, "\\1_\\2", [{return, list}, global])
                          end, NameString, [
         %% separte consecutive uppercase letters followed by a capitalised word, e.g. HTTPApi => HTTP_Api
         "([A-Z]+)([A-Z][a-z]+)",
         %% or add _ before capitalised words, e.g. fooTestApi => foo_Test_Api
-        "(.)([A-Z][a-z]+)",
+        "([A-Za-z0-9])([A-Z][a-z]+)",
         %% or separete any consecutive digits followed by alphabet, e.g. v33api => v33_api
-        "([0-9]+)([A-Za-z]+)",
+        % "([0-9]+)([A-Za-z]+)",
         %% uppercase followed by lowercase or digit, e.g. HealthApi => Health_Api
         "([a-z0-9])([A-Z])"]),
     Snaked1 = string:replace(Snaked, ".", "_", all),
-    Snaked2 = string:replace(Snaked1, "__", "_", all),
-    string:to_lower(unicode:characters_to_list(Snaked2)).
+    string:to_lower(unicode:characters_to_list(Snaked1)).
