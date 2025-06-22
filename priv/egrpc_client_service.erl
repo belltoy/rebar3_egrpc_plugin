@@ -12,6 +12,8 @@ This module was generated on {{datetime}} and should not be modified manually.
 
 -module({{module_name}}).
 
+-ignore_xref({{module_name}}).
+
 {{#methods}}
 -export([{{method}}/{{^input_stream}}2{{/input_stream}}{{#input_stream}}1{{/input_stream}}, {{method}}/{{^input_stream}}3{{/input_stream}}{{#input_stream}}2{{/input_stream}}]).
 {{/methods}}
