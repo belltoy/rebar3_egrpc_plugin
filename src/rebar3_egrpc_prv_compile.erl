@@ -7,7 +7,6 @@
 -define(PROVIDER, gen).
 -define(NAMESPACE, egrpc).
 -define(DEPS, [{default, app_discovery}, {protobuf, compile}]).
--define(DEFAULT_TEMPLATE_FILE, "egrpc_service.erl").
 
 %% ===================================================================
 %% Public API
