@@ -101,6 +101,8 @@ gen_client_module(ProtoFilename, Options, GpbOpts, EgrpcOpts, State) ->
 
 format_services(GpbModule, Service, OutDir, EgrpcOpts) ->
     DocAttribute = proplists:get_value(doc_attribute, EgrpcOpts, false),
+    ClientType = proplists:get_value(client_type, EgrpcOpts, "any()"),
+    MethodMetaType = proplists:get_value(method_meta_type, EgrpcOpts, "map()"),
     ModulePrefix = proplists:get_value(module_name_prefix, EgrpcOpts, "grpc_"),
     ModuleSuffix = proplists:get_value(module_name_suffix, EgrpcOpts, "_client"),
     {{service, FqServiceName}, RpcDef} = GpbModule:get_service_def(Service),
@@ -115,16 +117,30 @@ format_services(GpbModule, Service, OutDir, EgrpcOpts) ->
     [
         {out_dir,           OutDir},
         {use_doc_attribute, DocAttribute},
+        {client_type,       ClientType},
+        {method_meta_type,  MethodMetaType},
         {pb_module,         atom_to_list(GpbModule)},
         {fq_service_name,   atom_to_list(FqServiceName)},
         {module_name,       ModuleName},
-        {methods,           [format_rpc_def(M) || M <- RpcDef]}
+        {methods,           add_separator([format_rpc_def(M) || M <- RpcDef])}
     ].
+
+%% Mustache has no "not last" test, so mark the commas between list elements here.
+add_separator(Methods) ->
+    Last = length(Methods),
+    [[{sep, case N of Last -> ""; _ -> "," end} | M] || {N, M} <- lists:zip(lists:seq(1, Last), Methods)].
 
 grpc_type(false, false) -> unary;
 grpc_type(false, true)  -> server_streaming;
 grpc_type(true, false)  -> client_streaming;
 grpc_type(true, true)   -> bidi_streaming.
+
+idempotency(Opts) ->
+    case proplists:get_value(idempotency_level, Opts) of
+        'IDEMPOTENT'      -> idempotent;
+        'NO_SIDE_EFFECTS' -> no_side_effects;
+        _                 -> unknown
+    end.
 
 format_rpc_def(#{
     input         := Input,
@@ -132,7 +148,7 @@ format_rpc_def(#{
     name          := FqMethodName,
     output        := Output,
     output_stream := OutputStream
-}) ->
+} = Rpc) ->
      [
          {method,           snake_case(atom_to_list(FqMethodName))},
          {fq_method_name,   atom_to_list(FqMethodName)},
@@ -140,7 +156,8 @@ format_rpc_def(#{
          {output,           Output},
          {input_stream,     InputStream},
          {output_stream,    OutputStream},
-         {grpc_method_type, grpc_type(InputStream, OutputStream)}
+         {grpc_method_type, grpc_type(InputStream, OutputStream)},
+         {idempotency,      idempotency(maps:get(opts, Rpc, []))}
      ].
 
 snake_case(NameString) ->
