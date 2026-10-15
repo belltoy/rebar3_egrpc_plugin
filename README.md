@@ -52,9 +52,9 @@ Configure the generator in `rebar.config`:
 ``` erlang
 {egrpc_opts, [
     {protos, "priv/protos"},
-    {out_dir, "src/clients"},
+    {out_dir, "src/stubs"},
     {module_name_prefix, "grpc_"},
-    {module_name_suffix, "_client"},
+    {module_name_suffix, "_stub"},
     {doc_attribute, false},
     {client_type, "any()"},
     {method_meta_type, "map()"}
@@ -66,7 +66,7 @@ Configure the generator in `rebar.config`:
 | `protos` | `"priv/protos"` | Directory to look for `.proto` files |
 | `out_dir` | `"src"` | Directory the client modules are written to |
 | `module_name_prefix` | `"grpc_"` | Prefix of generated module names |
-| `module_name_suffix` | `"_client"` | Suffix of generated module names |
+| `module_name_suffix` | `"_stub"` | Suffix of generated stub module names |
 | `doc_attribute` | `false` | Use `-moduledoc`/`-doc` attributes (OTP 27+) instead of edoc comments |
 | `client_type` | `"any()"` | Type of the first argument of the generated functions, e.g. `"egrpc:client()"` |
 | `method_meta_type` | `"map()"` | Element type of the list returned by `methods/0` |

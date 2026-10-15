@@ -104,7 +104,7 @@ format_services(GpbModule, Service, OutDir, EgrpcOpts) ->
     ClientType = proplists:get_value(client_type, EgrpcOpts, "any()"),
     MethodMetaType = proplists:get_value(method_meta_type, EgrpcOpts, "map()"),
     ModulePrefix = proplists:get_value(module_name_prefix, EgrpcOpts, "grpc_"),
-    ModuleSuffix = proplists:get_value(module_name_suffix, EgrpcOpts, "_client"),
+    ModuleSuffix = proplists:get_value(module_name_suffix, EgrpcOpts, "_stub"),
     {{service, FqServiceName}, RpcDef} = GpbModule:get_service_def(Service),
     rebar_api:debug("egrpc service ~p has methods: ~p", [Service, RpcDef]),
     %% Use fully qualified service name as module name
@@ -164,11 +164,11 @@ snake_case(NameString) ->
     Snaked = lists:foldl(fun(RE, Snaking) ->
         re:replace(Snaking, RE, "\\1_\\2", [{return, list}, global])
                          end, NameString, [
-        %% separte consecutive uppercase letters followed by a capitalised word, e.g. HTTPApi => HTTP_Api
+        %% separate consecutive uppercase letters followed by a capitalized word, e.g. HTTPApi => HTTP_Api
         "([A-Z]+)([A-Z][a-z]+)",
-        %% or add _ before capitalised words, e.g. fooTestApi => foo_Test_Api
+        %% or add _ before capitalized words, e.g. fooTestApi => foo_Test_Api
         "([A-Za-z0-9])([A-Z][a-z]+)",
-        %% or separete any consecutive digits followed by alphabet, e.g. v33api => v33_api
+        %% or separate any consecutive digits followed by alphabet, e.g. v33api => v33_api
         % "([0-9]+)([A-Za-z]+)",
         %% uppercase followed by lowercase or digit, e.g. HealthApi => Health_Api
         "([a-z0-9])([A-Z])"]),
