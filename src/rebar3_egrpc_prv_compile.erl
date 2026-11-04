@@ -95,10 +95,17 @@ gen_client_module(ProtoFilename, Options, GpbOpts, EgrpcOpts, State) ->
     OutDir0 = proplists:get_value(out_dir, EgrpcOpts, "src"),
     OutDir = string:trim(OutDir0, trailing, "/"),
     Force = proplists:get_value(force, Options, true),
-    Services = [format_services(GpbModule, Service, OutDir, EgrpcOpts) || Service <- GpbModule:get_service_names()],
+    Services = [format_services(GpbModule, Service, OutDir, EgrpcOpts)
+                || Service <- own_services(GpbModule, ProtoFilename)],
     rebar_api:debug("egrpc will run client module gen for these services: ~p", [Services]),
     [rebar_templater:new(?TEMPLATE, Service, Force, State) || Service <- Services],
     rebar_api:info("Generated a client module for PB module ~s", [GpbModule]).
+
+%% gpb includes imported services in get_service_names/0. Only generate the
+%% services declared in this file, otherwise imports overwrite their own stubs
+%% with a different pb_module depending on generation order.
+own_services(GpbModule, ProtoFilename) ->
+    GpbModule:get_service_containment(filename:basename(ProtoFilename, ".proto")).
 
 format_services(GpbModule, Service, OutDir, EgrpcOpts) ->
     DocAttribute = proplists:get_value(doc_attribute, EgrpcOpts, false),
@@ -175,3 +182,44 @@ snake_case(NameString) ->
         "([a-z0-9])([A-Z])"]),
     Snaked1 = string:replace(Snaked, ".", "_", all),
     string:to_lower(unicode:characters_to_list(Snaked1)).
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+own_services_test_() ->
+    [{timeout, 30, {"service ownership, use_packages=" ++ atom_to_list(UsePackages),
+                   fun() -> check_service_ownership(UsePackages) end}}
+     || UsePackages <- [true, false]].
+
+check_service_ownership(UsePackages) ->
+    %% The imported service deliberately has the same package as the local
+    %% services: package filtering cannot establish which file owns a service.
+    ProtoDir = filename:join(["test", "protos", "ownership"]),
+    Qualify = fun(Name) ->
+        case UsePackages of
+            true -> list_to_atom("example." ++ Name);
+            false -> list_to_atom(Name)
+        end
+    end,
+    lists:foreach(fun({File, ExpectedNames}) ->
+        ProtoFilename = filename:join(ProtoDir, File ++ ".proto"),
+        Opts = [binary, maps, {i, ProtoDir}, {use_packages, UsePackages},
+                {module_name_prefix, "ownership_test_"}, return_warnings],
+        {ok, Module, Binary, _Warnings} = gpb_compile:file(ProtoFilename, Opts),
+        {module, Module} = code:load_binary(Module, ProtoFilename, Binary),
+        try
+            Expected = lists:sort([Qualify(Name) || Name <- ExpectedNames]),
+            ?assertEqual(Expected, lists:sort(own_services(Module, ProtoFilename))),
+            %% Ensure the fixture really exposes imported services through the
+            %% old API, including when the current file has no services at all.
+            case File of
+                "shared" -> ok;
+                _ -> ?assert(lists:member(Qualify("Imported"), Module:get_service_names()))
+            end
+        after
+            code:purge(Module),
+            code:delete(Module)
+        end
+    end, [{"shared", ["Imported"]}, {"local", ["Local", "Another"]}, {"messages", []}]).
+
+-endif.

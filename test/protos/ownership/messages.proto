@@ -1,0 +1,6 @@
+syntax = "proto3";
+package example;
+import "shared.proto";
+message Envelope {
+  Request request = 1;
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+package example;
+import "shared.proto";
+service Local {
+  rpc Call(Request) returns (Request);
+}
+service Another {
+  rpc Call(Request) returns (Request);
+}

@@ -76,7 +76,9 @@ Configure the generator in `rebar.config`:
 Generated code
 --------------
 
-One module is generated for each service. Module names are
+One module is generated for each service declared in the selected proto file. Imported services
+are generated only from their own proto files, so imports do not overwrite existing stubs.
+Module names are
 `<prefix><snake_cased_fq_service_name><suffix>`.
 
 For each RPC method `Foo`, a pair of functions `foo/N` and `foo/N+1` is generated, the last one
