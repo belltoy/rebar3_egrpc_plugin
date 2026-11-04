@@ -7,6 +7,7 @@
 -define(PROVIDER, gen).
 -define(NAMESPACE, egrpc).
 -define(DEPS, [{default, app_discovery}, {protobuf, compile}]).
+-define(TEMPLATE, "egrpc_client_stub").
 
 %% ===================================================================
 %% Public API
@@ -96,7 +97,7 @@ gen_client_module(ProtoFilename, Options, GpbOpts, EgrpcOpts, State) ->
     Force = proplists:get_value(force, Options, true),
     Services = [format_services(GpbModule, Service, OutDir, EgrpcOpts) || Service <- GpbModule:get_service_names()],
     rebar_api:debug("egrpc will run client module gen for these services: ~p", [Services]),
-    [rebar_templater:new("egrpc_client_service", Service, Force, State) || Service <- Services],
+    [rebar_templater:new(?TEMPLATE, Service, Force, State) || Service <- Services],
     rebar_api:info("Generated a client module for PB module ~s", [GpbModule]).
 
 format_services(GpbModule, Service, OutDir, EgrpcOpts) ->
